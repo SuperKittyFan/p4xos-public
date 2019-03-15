@@ -8,9 +8,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # please see the online documentation at vagrantup.com.
 
   config.vm.box = "ubuntu/trusty64"
+
   config.vm.provider "virtualbox" do |v|
     v.name = "p4xos-env"
+    # v.gui = true
   end
+
+## SSH config
+ config.ssh.forward_x11 = true
+ config.ssh.forward_agent = true
 
   # The url from where the 'config.vm.box' box will be fetched if it
   # doesn't already exist on the user's system.
@@ -27,8 +33,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
  config.vm.provision :shell, privileged: false, :path => "setup/mininet.sh"
  config.vm.provision :shell, privileged: false, :path => "setup/bmv2.sh"
 
- ## SSH config
- config.ssh.forward_x11 = true
+ 
 
  ## CPU & RAM
  ## We need at least 2G to build P4, otherwise you run out of memmory 

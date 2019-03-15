@@ -1,13 +1,15 @@
+# Acknowledgement
+
+This repository is the fork of [P4xos from usi-systems](https://github.com/usi-systems/p4xos-public) for the possible improvements on p4paxos and some exploration on the performance measurements. This is UIUC 538 Advance Computer Networks Research Project.
+
 # Setup a Virtual Machine
 
-We provide a VM to run p4paxos demo here: [usi-systems/sdn-coure-vm](https://github.com/usi-systems/sdn-course-vm)
-
-Please follow theses [instructions](https://github.com/usi-systems/sdn-course-vm/blob/master/README.md) to create a new virtual machine.
-
+* `cd environment`
+* `vagrant up` (should install vagrant and virtualbox)
 
 # Demo
 
-After connecting to the VM, change to the **p4paxos/bmv2** directory, and start the demo
+After connecting to the VM (`vagrant ssh`), cd to the **p4paxos-public/bmv2** directory, and start the demo
 
 ```
 cd p4paxos/bmv2
@@ -17,7 +19,7 @@ sudo ./run_demo.sh
 From the mininet prompt
 
 ```
-mininet> xterm h4
+mininet> xterm h4 (should install xquartz for macOS to enable the display forwarding)
 ```
 
 # Testing
