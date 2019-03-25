@@ -183,7 +183,7 @@ class Learner(DatagramProtocol):
             if inst <= self.minUncommitedIndex:
                 cmd = self.learner.logs[inst]
                 cmd_in_dict = json.loads(cmd)
-                logging.debug("%d %s" % (inst, cmd_in_dict))
+                # logging.debug("%d %s" % (inst, cmd_in_dict))
                 self.deliver(cmd_in_dict, d)
                 self.minUncommitedIndex += 1 if inst == self.minUncommitedIndex else 0
                 print "minUncommitedIndex: %d" % self.minUncommitedIndex
@@ -230,14 +230,13 @@ class Learner(DatagramProtocol):
                     if self.maxInstance < inst:
                         self.maxInstance = inst
                     d = self.deliverInstance(inst)
-                    d.addCallback(self.respond, req_id, pkt[IP].src,
-                        pkt[UDP].dport, pkt[UDP].sport)
+                    d.addCallback(self.respond, req_id, "10.0.0.1",
+                        34952, 34953)
             elif typ == PHASE_2A:
                 # broadcast TODO: fix this!
                 values = (PHASE_2B, inst, rnd, rnd, 0, req_id, value)
                 packer = struct.Struct('>' + 'B H B B Q B {0}s'.format(VALUE_SIZE - 1))
                 packed_data = packer.pack(*values)
-                print packed_data
                 pkt_header = IP(dst=self.dst1[0])/UDP(sport=34953, dport=34952)
                 send(pkt_header/packed_data, verbose=False)
                 pkt_header = IP(dst=self.dst2[0])/UDP(sport=34953, dport=34952)
