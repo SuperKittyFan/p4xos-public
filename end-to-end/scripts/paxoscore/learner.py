@@ -5,6 +5,7 @@ import logging
 from math import ceil
 from scapy.all import *
 from twisted.internet import defer
+from twisted.internet.protocol import DatagramProtocol
 from threading import Thread
 import json
 import netifaces
@@ -119,7 +120,7 @@ class PaxosLearner(object):
                     self.states[msg.inst] = state
         return res
 
-class Learner(object):
+class Learner(DatagramProtocol):
     """
     A learner instance provides the ordering of requests to the overlay application.
     If a decision has been made, the learner delivers that decision to the application.
@@ -132,6 +133,9 @@ class Learner(object):
         self.learner = PaxosLearner(num_acceptors)
         self.learner_addr = learner_addr
         self.learner_port = learner_port
+        self.dst1 = ('10.0.0.2',34952)
+        self.dst2 = ('10.0.0.3',34952)
+        self.dst3 = ('10.0.0.5',34952)
         self.minUncommitedIndex = 1
         self.maxInstance = 1
 
@@ -229,10 +233,21 @@ class Learner(object):
                     d.addCallback(self.respond, req_id, pkt[IP].src,
                         pkt[UDP].dport, pkt[UDP].sport)
             elif typ == PHASE_2A:
-                res = self.learner.handle_p1b(msg)
-                if res is not None:
-                    msg2a = self.make_paxos(PHASE_2A, res.inst, res.crnd, res.vrnd, res.val)
-                    self.sendMsg(msg2a, self.learner_addr, self.learner_port)
+                # broadcast TODO: fix this!
+                values = (PHASE_2B, inst, rnd, rnd, 0, req_id, value)
+                packer = struct.Struct('>' + 'B H B B Q B {0}s'.format(VALUE_SIZE - 1))
+                packed_data = packer.pack(*values)
+                print packed_data
+                pkt_header = IP(dst=self.dst1[0])/UDP(sport=34953, dport=34952)
+                send(pkt_header/packed_data, verbose=False)
+                pkt_header = IP(dst=self.dst2[0])/UDP(sport=34953, dport=34952)
+                send(pkt_header/packed_data, verbose=False)
+                pkt_header = IP(dst=self.dst3[0])/UDP(sport=34953, dport=34952)
+                send(pkt_header/packed_data, verbose=False)
+
+                # if res is not None:
+                #     msg2a = self.make_paxos(PHASE_2A, res.inst, res.crnd, res.vrnd, res.val)
+                #     self.sendMsg(msg2a, self.learner_addr, self.learner_port)
         except IndexError as ex:
             logging.error(ex)
 

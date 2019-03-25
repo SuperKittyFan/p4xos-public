@@ -49,7 +49,7 @@ class MyTopo(Topo):
         for i in [2, 3, 4]:
             switches.append(self.addSwitch('s%d' % (i)))
         
-        for h in [2,3]:
+        for h in [2,3,5]:
             hosts.append(self.addHost('h%d' % (h)))
 
         for i, s in enumerate(switches):
@@ -67,7 +67,7 @@ def main():
 
     net.start()
 
-    for n in [1, 2, 3, 4]: 
+    for n in [1, 2, 3, 4, 5]:
         h = net.get('h%d' % n)
         for off in ["rx", "tx", "sg"]:
             cmd = "/sbin/ethtool --offload eth0 %s off" % off
@@ -122,6 +122,8 @@ def main():
         h2.cmd("python scripts/backend.py --cfg scripts/paxos.cfg &")
         h3 = net.get('h3')
         h3.cmd("python scripts/backend.py --cfg scripts/paxos.cfg &")
+        h5 = net.get('h5')
+        h5.cmd("python scripts/backend.py --cfg scripts/paxos.cfg &")
 
     print "Ready !"
 
