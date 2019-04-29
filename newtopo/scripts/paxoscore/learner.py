@@ -5,7 +5,6 @@ import logging
 from math import ceil
 from scapy.all import *
 from twisted.internet import defer
-from twisted.internet.protocol import DatagramProtocol
 from threading import Thread
 import json
 import netifaces
@@ -120,7 +119,7 @@ class PaxosLearner(object):
                     self.states[msg.inst] = state
         return res
 
-class Learner(DatagramProtocol):
+class Learner(object):
     """
     A learner instance provides the ordering of requests to the overlay application.
     If a decision has been made, the learner delivers that decision to the application.
@@ -133,9 +132,6 @@ class Learner(DatagramProtocol):
         self.learner = PaxosLearner(num_acceptors)
         self.learner_addr = learner_addr
         self.learner_port = learner_port
-        self.dst1 = ('10.0.0.2',34952)
-        self.dst2 = ('10.0.0.3',34952)
-        self.dst3 = ('10.0.0.5',34952)
         self.minUncommitedIndex = 1
         self.maxInstance = 1
 
@@ -179,13 +175,12 @@ class Learner(DatagramProtocol):
     def deliverInstance(self, inst):
         try:
             d = defer.Deferred()
-            print("inst",inst)
-            if inst <= self.minUncommitedIndex:
+            if inst == self.minUncommitedIndex:
                 cmd = self.learner.logs[inst]
                 cmd_in_dict = json.loads(cmd)
-                # logging.debug("%d %s" % (inst, cmd_in_dict))
+                print "%d %s" % (inst, cmd_in_dict)
                 self.deliver(cmd_in_dict, d)
-                self.minUncommitedIndex += 1 if inst == self.minUncommitedIndex else 0
+                self.minUncommitedIndex += 1
                 print "minUncommitedIndex: %d" % self.minUncommitedIndex
                 if inst < self.maxInstance:
                     print "Try deliver next instance %d" % (inst + 1)
@@ -219,10 +214,9 @@ class Learner(DatagramProtocol):
             packer = struct.Struct(fmt)
             packed_size = struct.calcsize(fmt)
             unpacked_data = packer.unpack(datagram[:packed_size])
-            logging.debug(unpacked_data)
             typ, inst, rnd, vrnd, acceptor_id, req_id, value = unpacked_data
             value = value.rstrip('\t\r\n\0')
-            msg = PaxosMessage(acceptor_id, req_id, rnd, vrnd, value)
+            msg = PaxosMessage(acceptor_id, inst, rnd, vrnd, value)
             if typ == PHASE_2B:
                 res = self.learner.handle_p2b(msg)
                 if res is not None:
@@ -230,23 +224,13 @@ class Learner(DatagramProtocol):
                     if self.maxInstance < inst:
                         self.maxInstance = inst
                     d = self.deliverInstance(inst)
-                    d.addCallback(self.respond, req_id, "10.0.0.1",
-                        34952, 34953)
-            elif typ == PHASE_2A:
-                # broadcast TODO: fix this!
-                values = (PHASE_2B, inst, rnd, rnd, 0, req_id, value)
-                packer = struct.Struct('>' + 'B H B B Q B {0}s'.format(VALUE_SIZE - 1))
-                packed_data = packer.pack(*values)
-                pkt_header = IP(dst=self.dst1[0])/UDP(sport=34953, dport=34952)
-                send(pkt_header/packed_data, verbose=False)
-                pkt_header = IP(dst=self.dst2[0])/UDP(sport=34953, dport=34952)
-                send(pkt_header/packed_data, verbose=False)
-                pkt_header = IP(dst=self.dst3[0])/UDP(sport=34953, dport=34952)
-                send(pkt_header/packed_data, verbose=False)
-
-                # if res is not None:
-                #     msg2a = self.make_paxos(PHASE_2A, res.inst, res.crnd, res.vrnd, res.val)
-                #     self.sendMsg(msg2a, self.learner_addr, self.learner_port)
+                    d.addCallback(self.respond, req_id, pkt[IP].src,
+                        pkt[UDP].dport, pkt[UDP].sport)
+            elif typ == PHASE_1B:
+                res = self.learner.handle_p1b(msg)
+                if res is not None:
+                    msg2a = self.make_paxos(PHASE_2A, res.inst, res.crnd, res.vrnd, res.val)
+                    self.sendMsg(msg2a, self.learner_addr, self.learner_port)
         except IndexError as ex:
             logging.error(ex)
 
