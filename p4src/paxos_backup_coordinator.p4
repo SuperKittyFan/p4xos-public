@@ -26,11 +26,10 @@ table tbl_sequence {
 
 control ingress {
     apply(smac);                 /* MAC learning from l2_control.p4... */
-    apply(dmac);                 /* ... not doing Paxos logic */
-    
-
+    //apply(dmac);                 /* ... not doing Paxos logic */
+                                 
     if (valid(paxos)) {          /* check if we have a paxos packet */
         apply(tbl_sequence);     /* increase paxos instance number */
      }
-
+    apply(drop_tbl);
 }

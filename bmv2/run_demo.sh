@@ -27,6 +27,7 @@ SWITCH_PATH=$BMV2_PATH/targets/simple_switch/simple_switch
 CLI_PATH=$BMV2_PATH/targets/simple_switch/sswitch_CLI
 
 $P4C_BM_SCRIPT ../p4src/paxos_coordinator.p4 --json paxos_coordinator.json
+$P4C_BM_SCRIPT ../p4src/paxos_backup_coordinator.p4 --json paxos_backup_coordinator.json
 $P4C_BM_SCRIPT ../p4src/paxos_acceptor.p4 --json paxos_acceptor.json
 $P4C_BM_SCRIPT ../p4src/paxos_learner.p4 --json paxos_learner.json
 
@@ -34,5 +35,6 @@ sudo PYTHONPATH=$PYTHONPATH:$BMV2_PATH/mininet/ python topo.py \
     --behavioral-exe $BMV2_PATH/targets/simple_switch/simple_switch \
     --acceptor paxos_acceptor.json \
     --coordinator paxos_coordinator.json \
+    --backup-coordinator paxos_backup_coordinator.json \
     --cli $CLI_PATH \
     --start-server
