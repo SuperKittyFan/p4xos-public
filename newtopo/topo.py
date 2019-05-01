@@ -38,8 +38,8 @@ parser.add_argument('--acceptor', help='Path to acceptor JSON config file',
                     type=str, action="store", required=True)
 parser.add_argument('--coordinator', help='Path to coordinator JSON config file',
                     type=str, action="store", required=True)
-parser.add_argument('--backup-coordinator', help='Path to backup coordinator JSON config file',
-                    type=str, action="store", required=True)
+# parser.add_argument('--backup-coordinator', help='Path to backup coordinator JSON config file',
+#                     type=str, action="store", required=True)
 parser.add_argument('--cli', help='Path to BM CLI',
                     type=str, action="store", required=True)
 parser.add_argument('--start-server', help='Start Paxos httpServer and backends',
@@ -48,7 +48,8 @@ parser.add_argument('--start-server', help='Start Paxos httpServer and backends'
 args = parser.parse_args()
 
 class MyTopo(Topo):
-    def __init__(self, sw_path, acceptor, coordinator, backup_coordinator , **opts):
+    def __init__(self, sw_path, acceptor, coordinator , **opts):
+    # def __init__(self, sw_path, acceptor, coordinator, backup_coordinator , **opts):
         # Initialize topology and default options
         Topo.__init__(self, **opts)
 
@@ -59,19 +60,27 @@ class MyTopo(Topo):
                       pcap_dump = False,
                       device_id = 1)
 
-        s5 = self.addSwitch('s5',
-                      sw_path = args.behavioral_exe,
-                      json_path = backup_coordinator,
-                      thrift_port = _THRIFT_BASE_PORT + 5,
-                      pcap_dump = False,
-                      device_id = 5)
+        # s5 = self.addSwitch('s5',
+        #               sw_path = args.behavioral_exe,
+        #               json_path = backup_coordinator,
+        #               thrift_port = _THRIFT_BASE_PORT + 5,
+        #               pcap_dump = False,
+        #               device_id = 5)
+
+        s6 = self.addSwitch('s6',
+                            sw_path=args.behavioral_exe,
+                            json_path=acceptor,
+                            thrift_port=_THRIFT_BASE_PORT + 6,
+                            pcap_dump=False,
+                            device_id=6)
 
         h1 = self.addHost('h1')
         h4 = self.addHost('h4')
-        self.addLink(h1, s1)
+        self.addLink(h1, s6)
+        self.addLink(s6, s1)
         self.addLink(h4, s1)
-        self.addLink(h1, s5)
-        self.addLink(h4, s5)
+        # self.addLink(h1, s5)
+        # self.addLink(h4, s5)
         switches = []
         hosts = []
         for i in [2, 3, 4]:
@@ -91,12 +100,14 @@ class MyTopo(Topo):
                          )
         for i, s in enumerate(switches):
             self.addLink(s, s1)
-            self.addLink(s, s5)
+            # self.addLink(s, s5)
 
 
 def main():
     topo = MyTopo(args.behavioral_exe,
-                  args.acceptor, args.coordinator, args.backup_coordinator)
+                  args.acceptor, args.coordinator
+                  # , args.backup_coordinator
+                  )
 
     net = Mininet(topo = topo,
                   host = P4Host,
@@ -123,7 +134,7 @@ def main():
 
     sleep(2)
 
-    for i in [2, 3, 4]:
+    for i in [2, 3, 4, 6]:
         cmd = [args.cli, args.acceptor, str(_THRIFT_BASE_PORT + i)]
         with open("acceptor_commands.txt", "r") as f:
             print " ".join(cmd)
@@ -144,15 +155,15 @@ def main():
             print e
             print e.output
 
-    cmd = [args.cli, args.backup_coordinator, str(_THRIFT_BASE_PORT + 5)]
-    with open("backup_coordinator_commands.txt", "r") as f:
-        print " ".join(cmd)
-        try:
-            output = subprocess.check_output(cmd, stdin = f)
-            print output
-        except subprocess.CalledProcessError as e:
-            print e
-            print e.output
+    # cmd = [args.cli, args.backup_coordinator, str(_THRIFT_BASE_PORT + 5)]
+    # with open("backup_coordinator_commands.txt", "r") as f:
+    #     print " ".join(cmd)
+    #     try:
+    #         output = subprocess.check_output(cmd, stdin = f)
+    #         print output
+    #     except subprocess.CalledProcessError as e:
+    #         print e
+    #         print e.output
     
     for i in [2, 3, 4]:
         cmd = [args.cli, args.acceptor, str(_THRIFT_BASE_PORT + i)]

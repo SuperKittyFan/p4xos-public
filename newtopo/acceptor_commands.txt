@@ -6,6 +6,7 @@ table_set_default drop_tbl _drop
 table_set_default tbl_acceptor _nop
 table_add tbl_acceptor handle_1a 1 =>
 table_add tbl_acceptor handle_2a 3 =>
+table_add tbl_acceptor handle_2e 6 =>
 table_add mcast_src_pruning _drop 5 =>
 mc_mgrp_create 1
 mc_node_create 0 1 2 3 4 5
