@@ -2,6 +2,8 @@
 
 This repository is the fork of [P4xos from usi-systems](https://github.com/usi-systems/p4xos-public) for the possible improvements on p4paxos and some exploration on the performance measurements. This is UIUC 538 Advance Computer Networks Research Project.
 
+# [Introduction (see our poster)](https://docs.google.com/presentation/d/1eAVVu2V8FlbMpEaQDPW3wm-7gpuBA5DU9PvsoWlqyiY/edit?usp=sharing)
+
 # Setup a Virtual Machine
 
 * `cd environment`
